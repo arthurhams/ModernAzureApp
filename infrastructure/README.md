@@ -8,6 +8,6 @@ az group create --name ModernAzureApp --location westeurope --tags Purpose=Demo 
 # Deploy
 
 ```
-az group create --name ModernAzureApp --location westeurope --tags Purpose=Demo Production=NO
+az deployment group create --confirm-with-what-if --resource-group ModernAzureApp --template-file main.bicep #  --parameters param.json
 
 ```

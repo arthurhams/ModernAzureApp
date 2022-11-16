@@ -18,7 +18,7 @@ param serviceBusTopicSubName string = '${prefix}${cnt}-topic-frontend'
 param signalRName string = '${prefix}${cnt}signalr'
 param azureFrontDoorName string = '${prefix}${cnt}frontdoor'
 
-param keyvaultName string = '${prefix}${cnt}-keyvault-alpha'
+param keyvaultName string = '${prefix}${cnt}-keyvault'
 param uamiName string = '${prefix}${cnt}-app-identity'
 param signalRKeyName string = 'SignalRConnectionString'
 

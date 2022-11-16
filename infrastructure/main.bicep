@@ -1,8 +1,8 @@
 targetScope = 'resourceGroup'
 
 param location string = resourceGroup().location
-param prefix = 'modernapp'
-param cnt = 0
+param prefix string = 'modernapp'
+param cnt int = 0
 param logAnalyticsName string = '${prefix}${cnt}-laworkspace')
 param appInsightName string = '${prefix}${cnt}-appinsights'
 param acaEnvName string = '${prefix}${cnt}-aca-environment'
@@ -16,6 +16,7 @@ param serviceBusNamespace string = '${prefix}${cnt}sb'
 param serviceBusTopicName string = '${prefix}${cnt}-topic'
 param serviceBusTopicSubName string = '${prefix}${cnt}-topic-frontend'
 param signalRName string = '${prefix}${cnt}signalr'
+param azureFrontDoorName string = '${prefix}${cnt}frontdoor'
 
 param keyvaultName string = '${prefix}${cnt}-keyvault-alpha'
 param uamiName string = '${prefix}${cnt}-app-identity'
@@ -143,5 +144,13 @@ module acaEnvironment 'modules/environment.bicep' = {
     location: location
     envrionmentName: acaEnvName
     laWorkspaceName: logAnalyticsName
+  }
+}
+
+//provision a premium afd service
+module azureFrontDoor 'modules/azurefrontdoor/azurefrontdoor.bicep' = {
+  name: 'azureFrontDoor'
+  params: {
+    AzureFrontDoorResourceName : azureFrontDoorName
   }
 }

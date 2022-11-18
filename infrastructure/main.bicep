@@ -12,17 +12,44 @@ param storageQueueName string = '${prefix}${cnt}queue'
 param storageSecKeyName string = 'StorageKey'
 param storageSecAccountName string = 'StorageAccountName'
 param storageSecContainerName string = 'ContainerName'
+
+param deployServiceBus bool = false
 param serviceBusNamespace string = '${prefix}${cnt}sb'
 param serviceBusTopicName string = '${prefix}${cnt}-topic'
 param serviceBusTopicSubName string = '${prefix}${cnt}-topic-frontend'
+
+param deploySignalR bool = false
 param signalRName string = '${prefix}${cnt}signalr'
+
 param azureFrontDoorName string = '${prefix}${cnt}frontdoor'
+param vNetName string = '${prefix}${cnt}-vnet'
 
 param keyvaultName string = '${prefix}${cnt}-keyvault'
 param uamiName string = '${prefix}${cnt}-app-identity'
 param signalRKeyName string = 'SignalRConnectionString'
 
 param containerRegistryName string = '${prefix}${cnt}containerregistry'
+
+module vnet 'modules/vnet.bicep' = {
+  name: vNetName
+  params: {
+    virtualNetworkName: vNetName
+    vnetAddressPrefix: '10.0.0.0/16'
+    subnetAddressPrefix: '10.0.0.0/24'
+    subnetName: 'default' 
+    location: location
+  } 
+}
+
+module subnet1 'modules/subnet.bicep' = {
+  name: vNetName
+  params: {
+    virtualNetworkName: vNetName
+    subnetAddressPrefix: '10.0.0.1/24'
+    subnetName: 'default' 
+    location: location
+  } 
+}
 
 module uami 'modules/identity.bicep' = {
   name: uamiName
@@ -64,7 +91,7 @@ module keyvault 'modules/keyvault.bicep' = {
   }
 }
 
-module serviceBus 'modules/service-bus.bicep' = {
+module serviceBus 'modules/service-bus.bicep' = if(deployServiceBus) {
   name: 'xenielservicebus'  
   params: {
     serviceBusNamespace: serviceBusNamespace
@@ -72,6 +99,22 @@ module serviceBus 'modules/service-bus.bicep' = {
     serviceBusTopicSubName: serviceBusTopicSubName
     location: location
     identityPrincipalId: uami.outputs.principalId
+  }
+}
+
+var eventGridTopicName = '${storageAccountName}-${serviceBusTopicName}-topic'
+module eventgridTopicToServiceBus 'modules/eventGridServiceBus.bicep' = if(deployServiceBus) {
+  name: eventGridTopicName
+  dependsOn: [
+    serviceBus
+    storageAccount
+  ]
+  params: {
+    eventGridSystemTopicName: eventGridTopicName 
+    location: location
+    serviceBusNamespace: serviceBus.outputs.namespace
+    serviceBusTopicName: serviceBus.outputs.topicName
+    storageAccountName: storageAccount.outputs.accountName
   }
 }
 
@@ -90,24 +133,7 @@ module storageAccount 'modules/storageAccount.bicep' = {
   }
 }
 
-var eventGridTopicName = '${storageAccountName}-${serviceBusTopicName}-topic'
-module eventgridTopicToServiceBus 'modules/eventGridServiceBus.bicep' = {
-  name: eventGridTopicName
-  dependsOn: [
-    serviceBus
-    storageAccount
-  ]
-  params: {
-    eventGridSystemTopicName: eventGridTopicName 
-    location: location
-    serviceBusNamespace: serviceBus.outputs.namespace
-    serviceBusTopicName: serviceBus.outputs.topicName
-    storageAccountName: storageAccount.outputs.accountName
-  }
-}
-
-
-module signalR 'modules/signalr.bicep' = {
+module signalR 'modules/signalr.bicep' = if(deploySignalR) {
   name: signalRName
   params: {
     signalRName: signalRName
@@ -116,9 +142,6 @@ module signalR 'modules/signalr.bicep' = {
     signalRKeyName: signalRKeyName
   }
 }
-
-
-
 
 module logAnalytics 'modules/log-analytics.bicep' = {
   name: logAnalyticsName
